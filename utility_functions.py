@@ -1,57 +1,9 @@
 
-
 import tkinter as tk
 from eye_contact_detector import EyeContactDetector
 import cv2
 from PIL import Image, ImageTk
 
-
-class EyeContactApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Eye Contact Detection")
-        self.detector = EyeContactDetector()
-
-        self.label = tk.Label(root, text="Eye Contact", font=("Helvetica", 24))
-        self.label.pack()
-
-        self.canvas = tk.Canvas(root, width=640, height=480)
-        self.canvas.pack()
-
-        self.quit_button = tk.Button(root, text="Quit", command=self.quit_program)
-        self.quit_button.pack(side="left")
-
-        self.calibrate_button = tk.Button(root, text="Calibrate", command=self.calibrate)
-        self.calibrate_button.pack(side="right")
-
-        self.update_frame()
-
-    def update_frame(self):
-        image, eye_contact, zone, proximity = self.detector.detect_eye_contact()
-
-        if eye_contact:
-            self.label.config(text="Eye Contact", fg="green")
-        else:
-            self.label.config(text="No Eye Contact", fg="red")
-
-        # Convert the image to PhotoImage format for Tkinter
-        img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        img = Image.fromarray(img)
-        img_tk = ImageTk.PhotoImage(image=img)
-
-        self.canvas.create_image(0, 0, anchor="nw", image=img_tk)
-        self.canvas.img_tk = img_tk  # Keep a reference
-
-        self.root.after(10, self.update_frame)  # Update frame every 10 ms
-
-        return zone, proximity
-
-    def calibrate(self):
-        self.detector.calibrate()
-
-    def quit_program(self):
-        self.detector.release()
-        self.root.quit()
 
 
 import time
@@ -78,7 +30,7 @@ ACTION_CHUNKS_DATA = {}
 
 
 # --- Mock Gripper Class (Minimal) ---
-class MockGripper:
+class Gripper:
     """Simulates a gripper device needed by the playback function."""
 
     def __init__(self):
@@ -181,3 +133,99 @@ def update_robot_state(slide_id=None, key=None, value=None, clear_human_input=Fa
     with open(STATE_FILE, 'w') as f:
         json.dump(state, f)
 
+
+import json
+import os
+
+
+def record_home_position(robot, gripper, file_path="home_position.json"):
+    """
+    Records the robot's current joint positions as the home position
+    and saves it to a JSON file.
+
+    Parameters:
+    - robot: the robot object
+    - gripper: the gripper object (optional, can save gripper state too)
+    - file_path: path to save the home position JSON
+    """
+    if not robot:
+        print("Robot instance not provided. Cannot record home position.")
+        return False
+
+    try:
+        # Get current joint positions
+        joint_positions = robot.get_actual_joint_positions()  # UR robot API
+        gripper_position = None
+        if gripper:
+            # Optional: read gripper state if supported
+            gripper_position = gripper.get_position() if hasattr(gripper, "get_position") else None
+
+        # Structure data
+        home_data = {
+            "joints": joint_positions,
+            "gripper": gripper_position
+        }
+
+        # Save to file
+        with open(file_path, "w") as f:
+            json.dump(home_data, f, indent=4)
+
+        print(f"Home position recorded and saved to {file_path}.")
+        return True
+
+    except Exception as e:
+        print(f"Failed to record home position: {e}")
+        return False
+
+
+import json
+import os
+
+HOME_FILE = "home_position.json"
+
+def record_home_position(robot, gripper=None, file_path=HOME_FILE):
+    """
+    Records the robot's current joint positions as home.
+    """
+    try:
+        joints = robot.get_actual_joint_positions()
+        gripper_pos = gripper.get_position() if gripper and hasattr(gripper, "get_position") else None
+        data = {"joints": joints, "gripper": gripper_pos}
+        with open(file_path, "w") as f:
+            json.dump(data, f, indent=4)
+        print(f"[INFO] Home position recorded to {file_path}")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to record home position: {e}")
+        return False
+
+def load_home_position(file_path=HOME_FILE):
+    """
+    Loads the saved home position.
+    """
+    if not os.path.exists(file_path):
+        print(f"[WARNING] Home position file {file_path} not found")
+        return None
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        print(f"[ERROR] Failed to load home position: {e}")
+        return None
+
+def is_at_home(robot, tolerance=0.01, file_path=HOME_FILE):
+    """
+    Checks if the robot is at the recorded home position.
+    """
+    home = load_home_position(file_path)
+    if not home:
+        print("[WARNING] Home position not recorded yet.")
+        return False
+    try:
+        current = robot.get_actual_joint_positions()
+        diffs = [abs(c - h) for c, h in zip(current, home["joints"])]
+        return all(d < tolerance for d in diffs)
+    except Exception as e:
+        print(f"[ERROR] Failed to check home position: {e}")
+        return False
