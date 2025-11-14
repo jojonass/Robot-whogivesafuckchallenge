@@ -7,6 +7,7 @@ action_chunks.py interfaces with urx to let you both create motion like linear m
 these are saved on json file that can then be played back
 
 gaze_tracking.py creates the gui needed for live webcame feed and recording, as well as allowing the division og gaze zones that help with control logic in Robot_main.py
+This also contains the feature to control the number of cameras to be used and which camera IDS as well. 
 
 Slides.py hosts the slides that create the Gui, these are then sequenced throuhg in the main loop, and contain the instructions of the assembly
 
