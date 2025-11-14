@@ -8,3 +8,17 @@ these are saved on json file that can then be played back
 
 gaze_tracking.py creates the gui needed for live webcame feed and recording, as well as allowing the division og gaze zones that help with control logic in Robot_main.py
 
+Slides.py hosts the slides that create the Gui, these are then sequenced throuhg in the main loop, and contain the instructions of the assembly
+
+
+Dependencies 
+python 3.12 required
+numpy
+mediapipe
+urx
+opencv-python
+streamlit
+streamlit_autorefresh
+pillow
+
+
