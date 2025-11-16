@@ -9,7 +9,7 @@ OUT_FILE = "camera_scales.npz"
 IMAGE_DIR = "../calib_images/*.jpg"
 
 # >>> SET: distance from camera to the robot working plane (meters)
-Z_WORKPLANE_M = 0.50   # example
+Z_WORKPLANE_M = 0.50   # example: 0.50 m
 # <<<
 
 def main():
@@ -23,7 +23,7 @@ def main():
 
     image_files = sorted(glob.glob(IMAGE_DIR))
     if not image_files:
-        print(f"No images found for {IMAGE_DIR}")
+        print(f"No images found for pattern: {IMAGE_DIR}")
         return
 
     print(f"Found {len(image_files)} calibration images")
@@ -33,6 +33,7 @@ def main():
     for fname in image_files:
         img = cv2.imread(fname)
         if img is None:
+            print(f"Failed to read {fname}, skipping.")
             continue
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -40,7 +41,7 @@ def main():
 
         ret, corners = cv2.findChessboardCorners(gray, CHECKERBOARD)
         if not ret:
-            print(f"Checkerboard not detected in {fname}")
+            print(f"Checkerboard NOT detected in {os.path.basename(fname)}, skipping.")
             continue
 
         criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER,
@@ -54,8 +55,10 @@ def main():
 
         print(f"Used: {os.path.basename(fname)}")
 
-    if len(objpoints) < 5:
-        print(f"Not enough valid images: {len(objpoints)} (need ~5+)")
+    if gray_shape is None or len(objpoints) < 5:
+        print(f"\nNot enough valid views for calibration "
+              f"(have {len(objpoints)} with detected checkerboard). Need at least ~5.")
+        return
 
     # --- Intrinsic calibration ---
     ret, K, distCoeffs, rvecs, tvecs = cv2.calibrateCamera(
@@ -63,20 +66,27 @@ def main():
     )
 
     print("\nCalibration complete")
+    print("Reprojection error:", ret)
     print("Camera matrix K:\n", K)
     print("Distortion coefficients:\n", distCoeffs.ravel())
 
     W, H = gray_shape
     fx = K[0, 0]
     fy = K[1, 1]
+    cx = K[0, 2]
+    cy = K[1, 2]
 
     # --- Only what you need: mm/px at work plane ---
     scale_x_mm_per_px = (Z_WORKPLANE_M / fx) * 1000.0
     scale_y_mm_per_px = (Z_WORKPLANE_M / fy) * 1000.0
 
     print("\n--- SCALE (use these in your robot code) ---")
-    print(f"scale_x_mm_per_px = {scale_x_mm_per_px:.6f}")
-    print(f"scale_y_mm_per_px = {scale_y_mm_per_px:.6f}")
+    print(f"Image size:            {W} x {H} px")
+    print(f"fx, fy:                {fx:.2f}, {fy:.2f}")
+    print(f"cx, cy:                {cx:.2f}, {cy:.2f}")
+    print(f"Z_workplane:           {Z_WORKPLANE_M:.3f} m")
+    print(f"scale_x_mm_per_px:     {scale_x_mm_per_px:.6f} mm/px")
+    print(f"scale_y_mm_per_px:     {scale_y_mm_per_px:.6f} mm/px")
 
     # Save only the essentials
     np.savez(
@@ -87,10 +97,12 @@ def main():
         image_height=H,
         Z_workplane_m=Z_WORKPLANE_M,
         scale_x_mm_per_px=scale_x_mm_per_px,
-        scale_y_mm_per_px=scale_y_mm_per_px
+        scale_y_mm_per_px=scale_y_mm_per_px,
+        cx=cx,
+        cy=cy,
     )
 
-    print(f"\nSaved to {OUT_FILE}")
+    print(f"\nSaved calibration and scales to {OUT_FILE}")
 
 if __name__ == "__main__":
     main()
