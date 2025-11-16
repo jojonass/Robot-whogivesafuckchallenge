@@ -151,16 +151,22 @@ def playback_chunk(rob, gripper, chunk):
 
 # --- Recording Interface ---
 
-def record_new_chunk(rob, gripper, existing_chunks):
-    """Interactive interface to record a new action chunk."""
+def record_new_chunk(rob, gripper, existing_chunks, chunk_name=None):
+    """Interactive interface to record a new action chunk.
+
+    If chunk_name is given, it is used directly (no prompt).
+    Otherwise the user is asked to enter a name.
+    """
     if not rob:
         print("Please connect to the robot first.")
         return existing_chunks
 
-    chunk_name = input("\nEnter a descriptive name for this new Action Chunk (e.g., 'Pick_Part_A'): ").strip()
-    if not chunk_name:
-        print("Chunk name cannot be empty. Aborting recording.")
-        return existing_chunks
+    # If no name is provided, ask the user
+    if chunk_name is None:
+        chunk_name = input("\nEnter a descriptive name for this new Action Chunk (e.g., 'Pick_Part_A'): ").strip()
+        if not chunk_name:
+            print("Chunk name cannot be empty. Aborting recording.")
+            return existing_chunks
 
     new_chunk = {
         "name": chunk_name,
@@ -169,14 +175,15 @@ def record_new_chunk(rob, gripper, existing_chunks):
 
     print(f"\n--- Recording Action Chunk: '{chunk_name}' ---")
     print(
-        "Commands: 'r' (MoveL), 'j' (MoveJ), 'go' (Gripper Open), 'gc' (Gripper Close), 'w' (Wait), 'q' (Finish and Save), 'd' (Delete last step)")
+        "Commands: 'r' (MoveL), 'j' (MoveJ), 'go' (Gripper Open), 'gc' (Gripper Close), "
+        "'w' (Wait), 'q' (Finish and Save), 'd' (Delete last step)"
+    )
 
     while True:
         try:
             command = input(f"Action #{len(new_chunk['actions']) + 1} ({chunk_name}) > ").strip().lower()
 
             if command == 'r':  # Record MoveL (Cartesian Pose)
-                # getl() returns [x, y, z, rx, ry, rz]
                 pose = rob.getl()
                 new_chunk["actions"].append({
                     "type": "move_l",
@@ -185,7 +192,6 @@ def record_new_chunk(rob, gripper, existing_chunks):
                 print(f"  > MOVE_L recorded (TCP Pose: {pose[:3]}).")
 
             elif command == 'j':  # Record MoveJ (Joint Angles)
-                # getj() returns [j1, j2, j3, j4, j5, j6] in radians
                 joints = rob.getj()
                 new_chunk["actions"].append({
                     "type": "move_j",
@@ -234,6 +240,57 @@ def record_new_chunk(rob, gripper, existing_chunks):
     return existing_chunks
 
 
+def record_tool_chunks(rob, gripper, existing_chunks):
+    """
+    Guided recording of the tool position chunks needed by Robot_main.py
+    for the A→B→C→D→C→A logic.
+
+    Required chunks:
+
+      A (tool-specific):
+        - tool_location_m4
+        - tool_location_m5
+        - tool_location_m3
+
+      B (common):
+        - go_tool_square
+
+      C (common):
+        - go_tool_view
+    """
+    if not rob:
+        print("Please connect to the robot first.")
+        return existing_chunks
+
+    required_chunks = [
+        "tool_location_m4",
+        "tool_location_m5",
+        "tool_location_m3",
+        "go_tool_square",
+        "go_tool_view",
+    ]
+
+    print("\n=== Guided recording for tool-position chunks (A/B/C) ===")
+    print("This will help you record the positions used in the main robot sequence:")
+    print("  - A: tool_location_m4 / m5 / m3 (per tool)")
+    print("  - B: go_tool_square (common)")
+    print("  - C: go_tool_view   (common)")
+    print("For each chunk, you can choose to record or skip.")
+    print("Existing chunks will not be overwritten automatically; if you reuse a name,")
+    print("you will just add another chunk entry in the JSON file.\n")
+
+    for chunk_name in required_chunks:
+        ans = input(f"Record chunk '{chunk_name}' now? [y/N]: ").strip().lower()
+        if ans == 'y':
+            print(f"\nRecording '{chunk_name}'. Position the UR arm as needed and add actions.")
+            existing_chunks = record_new_chunk(rob, gripper, existing_chunks, chunk_name=chunk_name)
+        else:
+            print(f"Skipping '{chunk_name}'.")
+
+    print("\nFinished guided recording of tool-position chunks.")
+    return existing_chunks
+
+
 # --- Main Application Loop ---
 
 def main_menu():
@@ -252,8 +309,9 @@ def main_menu():
         print("2. Record New Action Chunk (Task)")
         print("3. Execute Action Chunk")
         print("4. Quit")
+        print("5. Record M3/M4/M5 Tool-Position Chunks (A/B/C)")
 
-        choice = input("Enter your choice (1-4): ").strip()
+        choice = input("Enter your choice (1-5): ").strip()
 
         if choice == '1':
             if rob:
@@ -287,6 +345,9 @@ def main_menu():
             if rob:
                 rob.close()
             break
+
+        elif choice == '5':
+            action_chunks = record_tool_chunks(rob, gripper, action_chunks)
 
         else:
             print("Invalid choice. Please try again.")
