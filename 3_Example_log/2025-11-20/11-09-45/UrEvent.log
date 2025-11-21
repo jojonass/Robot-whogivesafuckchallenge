@@ -1,0 +1,39 @@
+2025-11-20 11:09:45,381 - URBasic_robotModelEvent - INFO - Init done
+2025-11-20 11:09:45,893 - URBasic_realTimeClientEvent - INFO - Connected
+2025-11-20 11:09:45,893 - URBasic_realTimeClientEvent - INFO - RT_CLient constructor done
+2025-11-20 11:09:45,895 - URBasic_dataLogEvent - INFO - DataLog constructor done
+2025-11-20 11:09:45,896 - URBasic_rtdeEvent - INFO - RTDE constructor done
+2025-11-20 11:09:46,415 - URBasic_dashboardEvent - INFO - Connected
+2025-11-20 11:09:46,415 - URBasic_dashboardEvent - INFO - UR Dashboard respond Connected: Universal Robots Dashboard Server
+2025-11-20 11:09:46,415 - URBasic_dashboardEvent - INFO - Dashboard server constructor done
+2025-11-20 11:09:46,415 - URBasic_robotConnectorEvent - INFO - Init done
+2025-11-20 11:09:46,777 - URBasic_rtdeEvent - INFO - Controller version: 5.11.10-0
+2025-11-20 11:09:46,780 - URBasic_rtdeEvent - INFO - RTDE started
+2025-11-20 11:09:47,422 - URBasic_urScriptEvent - INFO - Init done
+2025-11-20 11:09:47,452 - URBasic_urScriptExtEvent - INFO - Init done
+2025-11-20 11:09:54,779 - URBasic_rtdeEvent - INFO - Total packages: 1000
+2025-11-20 11:10:02,779 - URBasic_rtdeEvent - INFO - Total packages: 2000
+2025-11-20 11:10:10,780 - URBasic_rtdeEvent - INFO - Total packages: 3000
+2025-11-20 11:10:18,780 - URBasic_rtdeEvent - INFO - Total packages: 4000
+2025-11-20 11:10:26,780 - URBasic_rtdeEvent - INFO - Total packages: 5000
+2025-11-20 11:10:34,780 - URBasic_rtdeEvent - INFO - Total packages: 6000
+2025-11-20 11:10:42,781 - URBasic_rtdeEvent - INFO - Total packages: 7000
+2025-11-20 11:10:50,782 - URBasic_rtdeEvent - INFO - Total packages: 8000
+2025-11-20 11:10:58,782 - URBasic_rtdeEvent - INFO - Total packages: 9000
+2025-11-20 11:11:06,783 - URBasic_rtdeEvent - INFO - Total packages: 10000
+2025-11-20 11:11:14,783 - URBasic_rtdeEvent - INFO - Total packages: 11000
+2025-11-20 11:11:22,783 - URBasic_rtdeEvent - INFO - Total packages: 12000
+2025-11-20 11:11:30,783 - URBasic_rtdeEvent - INFO - Total packages: 13000
+2025-11-20 11:11:38,783 - URBasic_rtdeEvent - INFO - Total packages: 14000
+2025-11-20 11:11:46,784 - URBasic_rtdeEvent - INFO - Total packages: 15000
+2025-11-20 11:11:54,785 - URBasic_rtdeEvent - INFO - Total packages: 16000
+2025-11-20 11:12:02,785 - URBasic_rtdeEvent - INFO - Total packages: 17000
+2025-11-20 11:12:10,785 - URBasic_rtdeEvent - INFO - Total packages: 18000
+2025-11-20 11:12:18,786 - URBasic_rtdeEvent - INFO - Total packages: 19000
+2025-11-20 11:12:26,786 - URBasic_rtdeEvent - INFO - Total packages: 20000
+2025-11-20 11:12:34,787 - URBasic_rtdeEvent - INFO - Total packages: 21000
+2025-11-20 11:12:42,786 - URBasic_rtdeEvent - INFO - Total packages: 22000
+2025-11-20 11:12:50,787 - URBasic_rtdeEvent - INFO - Total packages: 23000
+2025-11-20 11:12:58,787 - URBasic_rtdeEvent - INFO - Total packages: 24000
+2025-11-20 11:13:06,788 - URBasic_rtdeEvent - INFO - Total packages: 25000
+2025-11-20 11:13:14,788 - URBasic_rtdeEvent - INFO - Total packages: 26000

@@ -1,0 +1,13 @@
+2025-11-20 08:47:30,564 - URBasic_robotModelEvent - INFO - Init done
+2025-11-20 08:47:31,069 - URBasic_realTimeClientEvent - INFO - Connected
+2025-11-20 08:47:31,069 - URBasic_realTimeClientEvent - INFO - RT_CLient constructor done
+2025-11-20 08:47:31,071 - URBasic_dataLogEvent - INFO - DataLog constructor done
+2025-11-20 08:47:31,072 - URBasic_rtdeEvent - INFO - RTDE constructor done
+2025-11-20 08:47:31,574 - URBasic_dashboardEvent - INFO - Connected
+2025-11-20 08:47:31,574 - URBasic_dashboardEvent - INFO - UR Dashboard respond Connected: Universal Robots Dashboard Server
+2025-11-20 08:47:31,575 - URBasic_dashboardEvent - INFO - Dashboard server constructor done
+2025-11-20 08:47:31,575 - URBasic_robotConnectorEvent - INFO - Init done
+2025-11-20 08:47:32,164 - URBasic_rtdeEvent - INFO - Controller version: 5.11.10-0
+2025-11-20 08:47:32,168 - URBasic_rtdeEvent - INFO - RTDE started
+2025-11-20 08:47:32,590 - URBasic_urScriptEvent - INFO - Init done
+2025-11-20 08:47:32,622 - URBasic_urScriptExtEvent - INFO - Init done
