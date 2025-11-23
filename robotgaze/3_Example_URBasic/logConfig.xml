@@ -1,0 +1,18 @@
+<logConfig>
+  <developerMode>False</developerMode>
+
+  <eventLogConfig>
+    <fileMode>Append</fileMode>
+  </eventLogConfig>
+
+  <dataLogConfig>
+    <fileMode>Append</fileMode>
+    <defaultDecimals>4</defaultDecimals>
+    <logParameters>
+      <!-- Optional per-signal rounding overrides, e.g.:
+      <actual_TCP_pose>4</actual_TCP_pose>
+      <actual_q>3</actual_q>
+      -->
+    </logParameters>
+  </dataLogConfig>
+</logConfig>

@@ -1,0 +1,37 @@
+2025-11-20 10:14:41,121 - URBasic_robotModelEvent - INFO - Init done
+2025-11-20 10:14:41,637 - URBasic_realTimeClientEvent - INFO - Connected
+2025-11-20 10:14:41,637 - URBasic_realTimeClientEvent - INFO - RT_CLient constructor done
+2025-11-20 10:14:41,638 - URBasic_dataLogEvent - INFO - DataLog constructor done
+2025-11-20 10:14:41,639 - URBasic_rtdeEvent - INFO - RTDE constructor done
+2025-11-20 10:14:42,154 - URBasic_dashboardEvent - INFO - Connected
+2025-11-20 10:14:42,154 - URBasic_dashboardEvent - INFO - UR Dashboard respond Connected: Universal Robots Dashboard Server
+2025-11-20 10:14:42,154 - URBasic_dashboardEvent - INFO - Dashboard server constructor done
+2025-11-20 10:14:42,154 - URBasic_robotConnectorEvent - INFO - Init done
+2025-11-20 10:14:42,345 - URBasic_rtdeEvent - INFO - Controller version: 5.11.10-0
+2025-11-20 10:14:42,348 - URBasic_rtdeEvent - INFO - RTDE started
+2025-11-20 10:14:43,157 - URBasic_urScriptEvent - INFO - Init done
+2025-11-20 10:14:43,190 - URBasic_urScriptExtEvent - INFO - Init done
+2025-11-20 10:14:43,196 - URBasic_dashboardEvent - INFO - UR Dashboard respond Protective stop releasing
+2025-11-20 10:14:45,210 - URBasic_dashboardEvent - INFO - UR Dashboard respond closing safety popup
+2025-11-20 10:14:47,219 - URBasic_dashboardEvent - INFO - UR Dashboard respond Brake releasing
+2025-11-20 10:14:50,346 - URBasic_rtdeEvent - INFO - Total packages: 1000
+2025-11-20 10:14:51,238 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def move_l():
+  write_output_boolean_register(0, True)
+    movel( p[0.244, -0.32, 0.3, -3.122, -0.03, -0.123], a=0.4, v=0.5,  r=0)
+
+
+  write_output_boolean_register(1, True)
+end
+
+2025-11-20 10:14:51,345 - URBasic_realTimeClientEvent - ERROR - SendProgram: Safety Stop
+2025-11-20 10:14:51,396 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def resetRegister():
+  write_output_boolean_register(0, False)
+  write_output_boolean_register(1, False)
+end
+
+2025-11-20 10:14:58,346 - URBasic_rtdeEvent - INFO - Total packages: 2000
+2025-11-20 10:15:06,346 - URBasic_rtdeEvent - INFO - Total packages: 3000
+2025-11-20 10:15:14,347 - URBasic_rtdeEvent - INFO - Total packages: 4000
+2025-11-20 10:15:22,347 - URBasic_rtdeEvent - INFO - Total packages: 5000

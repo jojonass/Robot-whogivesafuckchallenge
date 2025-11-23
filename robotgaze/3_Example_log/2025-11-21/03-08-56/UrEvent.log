@@ -1,0 +1,31 @@
+2025-11-21 03:08:56,891 - URBasic_robotModelEvent - INFO - Init done
+2025-11-21 03:08:57,408 - URBasic_realTimeClientEvent - INFO - Connected
+2025-11-21 03:08:57,408 - URBasic_realTimeClientEvent - INFO - RT_CLient constructor done
+2025-11-21 03:08:57,409 - URBasic_dataLogEvent - INFO - DataLog constructor done
+2025-11-21 03:08:57,410 - URBasic_rtdeEvent - INFO - RTDE constructor done
+2025-11-21 03:08:57,927 - URBasic_dashboardEvent - INFO - Connected
+2025-11-21 03:08:57,927 - URBasic_dashboardEvent - INFO - UR Dashboard respond Connected: Universal Robots Dashboard Server
+2025-11-21 03:08:57,927 - URBasic_dashboardEvent - INFO - Dashboard server constructor done
+2025-11-21 03:08:57,928 - URBasic_robotConnectorEvent - INFO - Init done
+2025-11-21 03:08:58,624 - URBasic_rtdeEvent - INFO - Controller version: 5.11.10-0
+2025-11-21 03:08:58,642 - URBasic_rtdeEvent - INFO - RTDE started
+2025-11-21 03:08:58,943 - URBasic_urScriptEvent - INFO - Init done
+2025-11-21 03:08:58,974 - URBasic_urScriptExtEvent - INFO - Init done
+2025-11-21 03:08:58,975 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def move_l():
+  write_output_boolean_register(0, True)
+    movel( p[-0.3366, -0.2431, 0.15, -1.8471, -2.5203, 0.0339], a=0.3, v=0.1,  r=0)
+
+
+  write_output_boolean_register(1, True)
+end
+
+2025-11-21 03:09:03,720 - URBasic_realTimeClientEvent - ERROR - SendProgram: Safety Stop
+2025-11-21 03:09:03,738 - URBasic_rtdeEvent - ERROR - Lost some RTDE at 480.791 - 9.999999999990905 milliseconds since last package
+2025-11-21 03:09:03,783 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def resetRegister():
+  write_output_boolean_register(0, False)
+  write_output_boolean_register(1, False)
+end
+
+2025-11-21 03:09:06,643 - URBasic_rtdeEvent - INFO - Total packages: 1000

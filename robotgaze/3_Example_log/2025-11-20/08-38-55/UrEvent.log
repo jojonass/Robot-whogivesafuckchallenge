@@ -1,0 +1,14 @@
+2025-11-20 08:38:55,667 - URBasic_robotModelEvent - INFO - Init done
+2025-11-20 08:38:56,201 - URBasic_realTimeClientEvent - INFO - Connected
+2025-11-20 08:38:56,201 - URBasic_realTimeClientEvent - INFO - RT_CLient constructor done
+2025-11-20 08:38:56,202 - URBasic_dataLogEvent - INFO - DataLog constructor done
+2025-11-20 08:38:56,203 - URBasic_rtdeEvent - INFO - RTDE constructor done
+2025-11-20 08:38:56,722 - URBasic_dashboardEvent - INFO - Connected
+2025-11-20 08:38:56,722 - URBasic_dashboardEvent - INFO - UR Dashboard respond Connected: Universal Robots Dashboard Server
+2025-11-20 08:38:56,722 - URBasic_dashboardEvent - INFO - Dashboard server constructor done
+2025-11-20 08:38:56,722 - URBasic_robotConnectorEvent - INFO - Init done
+2025-11-20 08:38:57,522 - URBasic_rtdeEvent - INFO - Controller version: 5.11.10-0
+2025-11-20 08:38:57,526 - URBasic_rtdeEvent - INFO - RTDE started
+2025-11-20 08:38:57,728 - URBasic_urScriptEvent - INFO - Init done
+2025-11-20 08:38:57,760 - URBasic_urScriptExtEvent - INFO - Init done
+2025-11-20 08:39:05,525 - URBasic_rtdeEvent - INFO - Total packages: 1000

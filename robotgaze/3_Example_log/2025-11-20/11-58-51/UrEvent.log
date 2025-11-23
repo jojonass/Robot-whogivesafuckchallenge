@@ -1,0 +1,78 @@
+2025-11-20 11:58:51,275 - URBasic_robotModelEvent - INFO - Init done
+2025-11-20 11:58:51,790 - URBasic_realTimeClientEvent - INFO - Connected
+2025-11-20 11:58:51,790 - URBasic_realTimeClientEvent - INFO - RT_CLient constructor done
+2025-11-20 11:58:51,792 - URBasic_dataLogEvent - INFO - DataLog constructor done
+2025-11-20 11:58:51,793 - URBasic_rtdeEvent - INFO - RTDE constructor done
+2025-11-20 11:58:52,307 - URBasic_dashboardEvent - INFO - Connected
+2025-11-20 11:58:52,307 - URBasic_dashboardEvent - INFO - UR Dashboard respond Connected: Universal Robots Dashboard Server
+2025-11-20 11:58:52,308 - URBasic_dashboardEvent - INFO - Dashboard server constructor done
+2025-11-20 11:58:52,308 - URBasic_robotConnectorEvent - INFO - Init done
+2025-11-20 11:58:52,970 - URBasic_rtdeEvent - INFO - Controller version: 5.11.10-0
+2025-11-20 11:58:52,972 - URBasic_rtdeEvent - INFO - RTDE started
+2025-11-20 11:58:53,323 - URBasic_urScriptEvent - INFO - Init done
+2025-11-20 11:58:53,355 - URBasic_urScriptExtEvent - INFO - Init done
+2025-11-20 11:58:53,467 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def move_l():
+  write_output_boolean_register(0, True)
+    movel( p[0.244, -0.32, 0.3, -3.122, -0.03, -0.123], a=0.4, v=0.5,  r=0)
+
+
+  write_output_boolean_register(1, True)
+end
+
+2025-11-20 11:58:55,391 - URBasic_realTimeClientEvent - INFO - sendProgram: Finished
+2025-11-20 11:58:55,455 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def resetRegister():
+  write_output_boolean_register(0, False)
+  write_output_boolean_register(1, False)
+end
+
+2025-11-20 11:58:55,567 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def move_l():
+  write_output_boolean_register(0, True)
+    movel( p[0.25, -0.315, 0.152, -3.122, -0.03, -0.123], a=0.4, v=0.5,  r=0)
+
+
+  write_output_boolean_register(1, True)
+end
+
+2025-11-20 11:58:57,039 - URBasic_realTimeClientEvent - INFO - sendProgram: Finished
+2025-11-20 11:58:57,104 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def resetRegister():
+  write_output_boolean_register(0, False)
+  write_output_boolean_register(1, False)
+end
+
+2025-11-20 11:58:57,216 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def move_l():
+  write_output_boolean_register(0, True)
+    movel( p[0.244, -0.32, 0.3, -3.122, -0.03, -0.123], a=0.3, v=0.5,  r=0)
+
+
+  write_output_boolean_register(1, True)
+end
+
+2025-11-20 11:58:58,882 - URBasic_realTimeClientEvent - INFO - sendProgram: Finished
+2025-11-20 11:58:58,944 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def resetRegister():
+  write_output_boolean_register(0, False)
+  write_output_boolean_register(1, False)
+end
+
+2025-11-20 11:58:59,054 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def move_l():
+  write_output_boolean_register(0, True)
+    movel( p[-0.028, -0.371, 0.282, -3.122, -0.03, -0.12], a=0.4, v=0.5,  r=0)
+
+
+  write_output_boolean_register(1, True)
+end
+
+2025-11-20 11:59:00,969 - URBasic_realTimeClientEvent - INFO - sendProgram: Finished
+2025-11-20 11:59:00,970 - URBasic_rtdeEvent - INFO - Total packages: 1000
+2025-11-20 11:59:01,032 - URBasic_realTimeClientEvent - INFO - Program send to Robot:
+def resetRegister():
+  write_output_boolean_register(0, False)
+  write_output_boolean_register(1, False)
+end
+
