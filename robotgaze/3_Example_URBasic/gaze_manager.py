@@ -10,7 +10,7 @@ from eye_contact_detector import EyeContactDetector
 # --- CONFIGURATION ---
 CAMERA_ID = 0
 GAZE_HOLD_THRESHOLD = 0.5
-GAZE_MEMORY_WINDOW = 4.0
+GAZE_MEMORY_WINDOW = 1.5
 
 # 🌟 VISUALIZATION CONFIGURATION 🌟
 # Set to True to keep the 'Gaze Feedback' window open and displaying zone drawings after calibration.
@@ -144,7 +144,14 @@ class GazeWorker(threading.Thread):
 
                     # Window Management ONLY during Calibration
                     if cv2.getWindowProperty("Gaze Feedback", cv2.WND_PROP_VISIBLE) < 1:
-                        cv2.namedWindow("Gaze Feedback", cv2.WINDOW_AUTOSIZE)
+                        cv2.namedWindow("Gaze Feedback", cv2.WINDOW_NORMAL)  # allow resizing
+                        cv2.resizeWindow("Gaze Feedback", 1280, 960)  # set bigger size
+                        # Center the window on screen
+                        screen_width = 1920  # adjust to your monitor width
+                        screen_height = 1080  # adjust to your monitor height
+                        x = (screen_width - 1280) // 2
+                        y = (screen_height - 960) // 2
+                        cv2.moveWindow("Gaze Feedback", x, y)
 
                     # is_active=True ensures visualization is drawn during calibration
                     gaze_data = self.detector.detect_and_draw(self.cam_id, frame, is_active=True)
@@ -211,7 +218,7 @@ class GazeWorker(threading.Thread):
 
 
 def wait_for_gaze_command(worker: GazeWorker, required_zone: str):
-    GAZE_MEMORY_WINDOW = 10.0
+    GAZE_MEMORY_WINDOW = 5.0
     print(f"\n[ASSEMBLY] Waiting for command: '{required_zone}' (valid for {GAZE_MEMORY_WINDOW}s after hold)...")
 
     while worker.running:

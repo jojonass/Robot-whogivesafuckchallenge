@@ -1,7 +1,6 @@
 import cv2
-import numpy as np
-from datetime import datetime
 import time
+import os
 
 # -----------------------------
 # Global Flags and Config
@@ -30,31 +29,6 @@ def mouse_callback(event, x, y, flags, param):
         if x1 <= x <= x2 and y1 <= y <= y2:
             ready_clicked = True
 
-# -----------------------------
-# Draw functions
-# -----------------------------
-def draw_text_panel(img, title, text):
-    h, w = img.shape[:2]
-    panel_height = 180
-    cv2.rectangle(img, (20, h-panel_height-20), (w-20, h-20), (255,255,255), -1)
-    cv2.rectangle(img, (20, h-panel_height-20), (w-20, h-20), (0,0,0), 2)
-
-    cv2.putText(img, title, (30, h-panel_height+30), FONT, 1.2, (0,0,0), 3)
-
-    y0 = h-panel_height+70
-    dy = 35
-    for i, line in enumerate(text.split("\n")):
-        y = y0 + i*dy
-        cv2.putText(img, line, (30, y), FONT, 0.9, (0,0,0), 2)
-
-    return img
-
-def draw_ready_button(img):
-    x1, y1, x2, y2 = BUTTON_RECT
-    cv2.rectangle(img, (x1, y1), (x2, y2), (0,150,0), -1)
-    cv2.rectangle(img, (x1, y1), (x2, y2), (0,0,0), 3)
-    cv2.putText(img, "YES - I'M READY", (x1+20, y1+45), FONT, 1.0, (255,255,255), 2)
-    return img
 
 # -----------------------------
 # Slide Viewer
@@ -67,7 +41,7 @@ import screeninfo
 from datetime import datetime
 
 class SlideViewer:
-    def __init__(self, scale=0.8):
+    def __init__(self, scale=0.95):
         self.window_name = "Instructions"
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
         monitor = screeninfo.get_monitors()[0]
@@ -100,62 +74,38 @@ class SlideViewer:
         global robot_continue
         robot_continue = True
 
-    def _prepare_slide_image(self, slide):
-        if slide.get("text_only", False):
-            img = np.full((self.screen_height, self.screen_width, 3), 200, dtype=np.uint8)
-            img = draw_text_panel(img, slide["title"], slide["text"])
-        else:
-            img = cv2.imread(slide["image"])
-            img = cv2.resize(img, (self.screen_width, self.screen_height))
-        return img
-
-
-    def show_slide_blocking_robot(self, slide, display_time=2.0):
-        """Show a slide and block until display_time passes (or robot continues)."""
-        img = self.prepare_slide_image(slide)
-        cv2.imshow(self.window_name, img)
-        cv2.waitKey(1)  # ensure image is displayed
-        time.sleep(display_time)
 
 
 
+# Folder containing exported PNG slides (relative to your Python code)
+slide_folder = "Slides"
 
-'''
-instruction_slides = [
-    # Slide 0: Standby, robot-controlled
-    {
-        "text_only": True,
-        "title": "Standby",
-        "text": "Robot calibration is occurring.\nPlease wait..."
-    },
-    # Slide 1: Ready, human must click YES
-    {
-        "text_only": True,
-        "title": "Ready?",
-        "text": "Please confirm you are ready to continue."
-    },
-    # Slide 2: Image slide example (replace with real PNG)
-    {
-        "text_only": False,
-        "image": "instructions/slide2.png"
-    },
-    # Slide 3: Image slide example (replace with real PNG)
-    {
-        "text_only": False,
-        "image": "instructions/slide3.png"
-    },
-    # Slide 4: Image slide example (replace with real PNG)
-    {
-        "text_only": False,
-        "image": "instructions/slide4.png"
-    },
-    # Slide 5: Thank you slide, text-only
-    {
-        "text_only": True,
-        "title": "Thank You!",
-        "text": "The instruction routine is complete."
-    },
-]
+# Get all PNG files in the folder, sorted by name
+import re
+
+def numeric_sort(f):
+    match = re.search(r'(\d+)', f)
+    return int(match.group(1)) if match else 0
+
+slide_files = sorted(
+    [f for f in os.listdir(slide_folder) if f.lower().endswith(".png")],
+    key=numeric_sort
+)
+
+instruction_slides = [{"text_only": False, "image": os.path.join(slide_folder, f)} for f in slide_files]
+
+
+
+
+
+
+import os
+import cv2
+
+
+
+
+
 '''
 
 instruction_slides = [
@@ -195,3 +145,5 @@ instruction_slides = [
         "text": "The instruction routine is complete."
     },
 ]
+
+'''

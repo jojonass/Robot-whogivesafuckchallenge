@@ -21,7 +21,7 @@ class EyeContactDetector:
     CALIBRATION_TIME = 8.0  # Seconds for calibration
 
     # NEW LOGIC: Use 0.7 as the fixed split point for Left/Right zones
-    GAZE_SPLIT_THRESHOLD = 0.6
+    GAZE_SPLIT_THRESHOLD = 0.55
 
     def __init__(self, camera_manager):
         self.camera_manager = camera_manager
