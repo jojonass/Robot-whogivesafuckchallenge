@@ -161,12 +161,6 @@ def ExampleurScript(worker, status):
         # Move the robot to the camera inspection pose (pose_tool_square_approach)
         robot.movel(pose=pose_tool_square_approach, a=acc, v=vel)
     
-        # Signal the GUI that object detection is now active (for feedback/status)
-        print("[Robot] Triggering combined object detection and gaze check.")
-        # We introduce a new status flag for detection
-        status["wait_for_detection"] = True
-        status["current_slide"] = slide_counter  # Keep showing the transition slide
-    
         Wait for Gaze to confirm user is ready for robot to proceed
         # 8a:  
         status["wait_for_gaze"] = True
