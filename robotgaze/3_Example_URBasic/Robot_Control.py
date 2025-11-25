@@ -14,14 +14,16 @@ GAZE_COMMAND_ZONE = 'Right'
 GUI_COMMAND_ZONE = 'Left'
 
 # Shared state between robot thread and GUI
-robot_status = {
+status = {
     "current_slide": 0,   # Slide index to show
-    "wait_for_gaze": False
+    "wait_for_gaze": False,
+     "wait_for_detection": False,
+    "detection_result": None
 }
 host = "192.168.0.9"  # Adjust to match your robot / simulator IP
 #  host '192.168.1.10'
-acc = 1.3
-vel = 1.3
+acc = 1.8
+vel = 1.8
 
 def wait_for_detection_and_get_pose(robot):
     base_tcp_pose = robot.getl()
@@ -35,8 +37,7 @@ def wait_for_detection_and_get_pose(robot):
         timeout=5.0,
     )
 
-    # In a real scenario, you'd replace this with the actual detected pose.
-    # For now, we simulate the detection returning the base pose.
+
     detected_pose = detector.get_target_pose()
     if detected_pose is not None:
         return detected_pose
@@ -64,10 +65,6 @@ def ExampleurScript(worker, status):
     pose_tool_square_approach = [-0.336, 0.196, 0.377, - 3.148, 0.028, 0.022]
     pose_tool_square_place = [-0.434, 0.263, 0.136, - 3.148, 0.028, 0.022]
     home_joints = [-0.380, -0.149, 0.3, - 3.148, 0.028, 0.022]
-
-    robotModel = URBasic.robotModel.RobotModel()
-    robot = URBasic.urScriptExt.UrScriptExt(host="192.168.0.9", robotModel=robotModel)
-    robot.reset_error()
 
     print("Creating gripper...")
     gripper = robotiq_gripper.RobotiqGripper()
@@ -131,7 +128,7 @@ def ExampleurScript(worker, status):
 
         # Step 7: gaze check for tool placement
         original_threshold = worker.gaze_memory.hold_threshold
-        worker.gaze_memory.hold_threshold = 2.3  # seconds
+        worker.gaze_memory.hold_threshold = 2.0 # seconds
         step_counter += 1
         status["wait_for_gaze"] = True
         wait_for_gaze_command(worker, GAZE_COMMAND_ZONE)
@@ -179,12 +176,16 @@ def ExampleurScript(worker, status):
         
         # 8b: Wait for successful object detection (e.g., to confirm gear is placed)
         
-        print("[Robot] Waiting for object detection to confirm user task is complete.")
-        detected_pose = wait_for_detection_and_get_pose(robot)
-        status["wait_for_detection"] = False
+        print("Robot requesting object detection")
+        status["wait_for_detection"] = True
+        status["detection_result"] = None
+        # Pause robot thread
+        while robot_status["detection_result"] is None:
+            time.sleep(0.05)
+        detected_pose = robot_status["detection_result"]
+        rstatus["wait_for_detection"] = False
+        print("Detection returned:", detected_pose)
         
-        #### HMMM IDK HOW LONG of a time out do we want here or do we want them to look at tool place,
-        then look back at the gui and then detected pose is activated???????
     
         if detected_pose is None:
             print("[Robot] ERROR: Detection failed. Halting routine.")
@@ -205,11 +206,18 @@ def ExampleurScript(worker, status):
         '''
     
     
-    # Step 9: Return home
+    # Step 9: Return home wait for gaze to confirm finishing
+
     print(f"[Step {step_counter}] Returning home")
+    status["current_slide"] = len(instruction_slides) - 3
+
+    status["wait_for_gaze"] = True
+    wait_for_gaze_command(worker, GAZE_COMMAND_ZONE)
+    status["wait_for_gaze"] = False
+
     robot.movel(pose=home_joints, a=acc, v=vel)
-    status["current_slide"] = 11
-    status["current_slide"] = 12
+    status["current_slide"] = len(instruction_slides) - 2
+    status["current_slide"] = len(instruction_slides) - 1
     print(f"[Step {step_counter+1}] Showing final slide")
 
 
@@ -233,6 +241,10 @@ if __name__ == "__main__":
         # Initialize SlideViewer
         slide_viewer = SlideViewer(scale=0.97)
 
+        robotModel = URBasic.robotModel.RobotModel()
+        robot = URBasic.urScriptExt.UrScriptExt(host="192.168.0.9", robotModel=robotModel)
+        robot.reset_error()
+
         # Show initial standby slide
         current_slide_index = 0
         img = slide_viewer.prepare_slide_image(instruction_slides[0])
@@ -242,7 +254,7 @@ if __name__ == "__main__":
 
         # Start GazeWorker
         worker = GazeWorker(cam_id=0)
-        worker.gaze_memory = GazeMemory(hold_threshold=0.5, memory_window=1.5)
+        worker.gaze_memory = GazeMemory(hold_threshold=0.1, memory_window=1.0)
         worker.start()
         print("[Main] GazeWorker started. Waiting for calibration...")
 
@@ -251,7 +263,7 @@ if __name__ == "__main__":
         print("[Main] Calibration complete.")
 
         # Start robot routine in a separate thread
-        robot_thread = threading.Thread(target=ExampleurScript, args=(worker, robot_status))
+        robot_thread = threading.Thread(target=ExampleurScript, args=(worker, status))
         robot_thread.start()
 
         # Main loop: update slides dynamically
@@ -259,15 +271,16 @@ if __name__ == "__main__":
         while robot_thread.is_alive():
 
             # Start from robot-provided slide index
-            slide_index = robot_status["current_slide"]
+            slide_index = status["current_slide"]
 
-
-            ''' Not necessay at the moment
-            # Override to gaze slide only if robot is waiting for gaze AND we're not already on gaze slide
-            if robot_status.get("wait_for_gaze", False) and slide_index != 1:
-                slide_index = 1
-                time.sleep(2.0)
-            '''
+            #  Check detection request
+            if status.get("wait_for_detection"):
+                print("[Main] Running object detection in main loop...")
+                detected_pose = wait_for_detection_and_get_pose(robot)  # pass robot object
+                status["detection_result"] = detected_pose
+                status["wait_for_detection"] = False  # reset the flag
+                print("[Main] Detection done:", detected_pose)
+                continue
 
             # Only re-render if slide changed
             if slide_index != current_slide_index:
@@ -292,3 +305,4 @@ if __name__ == "__main__":
         stop_worker_gracefully(worker)
         cv2.destroyAllWindows()
         print(" Program successfully shut down.")
+
