@@ -25,6 +25,9 @@ class CameraStream:
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+        self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
         self.ret, self.frame = self.cap.read()
         self.lock = threading.Lock()
         self.stopped = False
@@ -105,52 +108,73 @@ class CameraManager:
             cam.stop()
         self.cameras = {}  # Clear the dictionary
 
+    def get_resolution(self, cam_id):
+        cam = self.cameras.get(cam_id)
+        if cam is None:
+            raise ValueError(f"Camera {cam_id} not initialized")
+        return cam.width, cam.height
 
+
+import os
+import threading
+import time
+import cv2
 
 class CameraRecorder:
     """
     Handles recording from CameraManager streams.
     Can record multiple cameras simultaneously.
+    Saves videos in a 'recordings' subfolder by default.
     """
 
-    def __init__(self, camera_manager: CameraManager):
+    def __init__(self, camera_manager, save_dir="recordings"):
         self.camera_manager = camera_manager
         self.recorders = {}  # cam_id -> (VideoWriter, filename)
         self.recording_flags = {}  # cam_id -> bool
+        self.save_dir = os.path.join(os.getcwd(), save_dir)  # subfolder in current directory
+        os.makedirs(self.save_dir, exist_ok=True)
+        self.file_counter = 1
 
-    def start_recording(self, cam_id, filename, fps=30, resolution=(640, 480)):
-        """Start recording a specific camera."""
+    def _generate_filename(self):
+        """Generates a unique filename in the recordings folder."""
+        while True:
+            filename = os.path.join(self.save_dir, f"gaze_recorded_{self.file_counter}.avi")
+            if not os.path.exists(filename):
+                self.file_counter += 1
+                return filename
+            self.file_counter += 1
+
+    def start_recording(self, cam_id, filename=None, fps=30, resolution=(640, 480)):
         if cam_id not in self.camera_manager.cameras:
             raise ValueError(f"Camera {cam_id} not available for recording.")
+
+        if filename is None:
+            filename = self._generate_filename()  # auto-generate filename in recordings folder
 
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         writer = cv2.VideoWriter(filename, fourcc, fps, resolution)
         self.recorders[cam_id] = (writer, filename)
         self.recording_flags[cam_id] = True
-        print(f"Started recording camera {cam_id} to {filename}")
+        print(f"Started recording camera {cam_id} → {filename}")
 
         # Start recording thread
         threading.Thread(target=self._record_loop, args=(cam_id,), daemon=True).start()
 
     def _record_loop(self, cam_id):
-        """Continuously write frames to file while recording."""
         writer, _ = self.recorders[cam_id]
         while self.recording_flags.get(cam_id, False):
             ret, frame = self.camera_manager.get_frame(cam_id)
             if ret and frame is not None:
                 writer.write(frame)
             else:
-                # Wait briefly if no frame
                 time.sleep(0.01)
         writer.release()
         print(f"Stopped recording camera {cam_id}")
 
     def stop_recording(self, cam_id):
-        """Stop recording a specific camera."""
         if cam_id in self.recording_flags:
             self.recording_flags[cam_id] = False
 
     def stop_all(self):
-        """Stop all recordings."""
         for cam_id in list(self.recording_flags.keys()):
             self.stop_recording(cam_id)
