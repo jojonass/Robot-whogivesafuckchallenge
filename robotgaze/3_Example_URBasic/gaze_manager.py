@@ -9,8 +9,8 @@ from eye_contact_detector import EyeContactDetector
 
 # --- CONFIGURATION ---
 CAMERA_ID = 0
-GAZE_HOLD_THRESHOLD = 0.5
-GAZE_MEMORY_WINDOW = 1.5
+GAZE_HOLD_THRESHOLD = 0
+GAZE_MEMORY_WINDOW = 1.0
 
 # 🌟 VISUALIZATION CONFIGURATION 🌟
 # Set to True to keep the 'Gaze Feedback' window open and displaying zone drawings after calibration.
@@ -32,6 +32,7 @@ class GazeMemory:
         self._contact_start = None
         self._current_zone = None
         self.lock = threading.Lock()
+
 
     def update(self, is_detected: bool, zone_value: str):
         now = time.time()
@@ -63,7 +64,7 @@ class GazeMemory:
 
 class GazeWorker(threading.Thread):
 
-    def __init__(self, cam_id=CAMERA_ID):
+    def __init__(self, cam_id=CAMERA_ID, record_filename="gaze_recording.mp4", record_fps=20):
         super().__init__()
         self.cam_id = cam_id
         self.gaze_state = None
@@ -75,143 +76,112 @@ class GazeWorker(threading.Thread):
         self.cam_manager = None
         self.detector = None
 
-    def get_gaze_state(self):
-        with self.lock:
-            return self.gaze_state
+        # --- Recording ---
+        self.recording = True
+        self.video_writer = None
+        self.record_filename = record_filename
+        self.record_fps = record_fps
 
-    # --- UPDATED set_active METHOD (Controls both tracking and window closure) ---
-    def set_active(self, status: bool, close_window: bool = False):
-        """
-        Sets the tracking status and optionally closes the window.
-        status: If True, gaze tracking/memory is active.
-        close_window: If True, specifically destroys the CV window.
-        """
+    def set_active(self, status: bool):
         with self.lock:
             self.is_active = status
-
-            # --- CRITICAL FIX: Close window logic remains here ---
-            if close_window and cv2.getWindowProperty("Gaze Feedback", cv2.WND_PROP_VISIBLE) >= 1:
-                # Check if the window is visible/exists before trying to destroy it
-                cv2.destroyWindow("Gaze Feedback")
-
             print(f"[{self.name}] Tracking set to {'ACTIVE' if status else 'INACTIVE'}")
 
-    def recalibrate(self):
-        with self.lock:
-            if self.detector:
-                print(f"\n[{self.name}] ** EXTERNAL RECALIBRATION TRIGGERED **")
-                self.is_calibrated = False
-                self.detector.start_calibration(self.cam_id)
-            else:
-                print(f"\n[{self.name}] Detector not initialized yet. Skipping recalibration.")
-
     def stop(self):
-        """Cleanly stops the worker thread and its internal camera streams."""
-        print(f"[{self.name}] Received stop signal. Setting running=False.")
+        print(f"[{self.name}] Stopping GazeWorker...")
         self.running = False
-        # Close the window immediately if it exists to ensure the thread can exit cleanly
-        self.set_active(False, close_window=True)
 
     def run(self):
         print(f"[{self.name}] Starting Gaze Worker...")
 
         self.cam_manager = CameraManager(camera_ids=[self.cam_id])
         self.detector = EyeContactDetector(self.cam_manager)
-
         time.sleep(1)
+
         if self.cam_id not in self.cam_manager.cameras:
             print(f"[{self.name}] ERROR: Camera {self.cam_id} failed to initialize. Exiting worker.")
             self.running = False
             return
 
-        # THIS IS THE ONE AND ONLY CALIBRATION TRIGGER
+        # --- Initialize VideoWriter for recording all frames ---
+        width, height = self.cam_manager.get_resolution(self.cam_id)
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        self.video_writer = cv2.VideoWriter(self.record_filename, fourcc, self.record_fps, (width, height))
+        print(f"[{self.name}] Recording started → {self.record_filename}")
+
+        # Start calibration
         self.detector.start_calibration(self.cam_id)
-        # Set to True so the main loop starts in calibration mode
         self.set_active(True)
 
         try:
             while self.running:
-
                 ret, frame = self.cam_manager.get_frame(self.cam_id)
-
                 if not ret:
                     time.sleep(0.01)
                     continue
 
-                # --- Calibration Phase ---
+                # --- Calibration phase ---
                 if self.detector.needs_calibration.get(self.cam_id, False):
                     self.is_calibrated = False
+                    gaze_data = self.detector.detect_and_draw(self.cam_id, frame, is_active=True)
+                    elapsed = time.time() - self.detector.calibration_start_time.get(self.cam_id, time.time())
+                    remaining = max(0, self.detector.CALIBRATION_TIME - elapsed)
+                    cv2.putText(frame, f"CALIBRATING ({remaining:.1f}s) - Look Straight",
+                                (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
 
-                    # Window Management ONLY during Calibration
+                    # Show window and move to corner after calibration
                     if cv2.getWindowProperty("Gaze Feedback", cv2.WND_PROP_VISIBLE) < 1:
-                        cv2.namedWindow("Gaze Feedback", cv2.WINDOW_NORMAL)  # allow resizing
-                        cv2.resizeWindow("Gaze Feedback", 1280, 960)  # set bigger size
-                        # Center the window on screen
-                        screen_width = 1920  # adjust to your monitor width
-                        screen_height = 1080  # adjust to your monitor height
+                        cv2.namedWindow("Gaze Feedback", cv2.WINDOW_NORMAL)
+                        cv2.resizeWindow("Gaze Feedback", 1280, 960)
+                        screen_width, screen_height = 1920, 1080
                         x = (screen_width - 1280) // 2
                         y = (screen_height - 960) // 2
                         cv2.moveWindow("Gaze Feedback", x, y)
 
-                    # is_active=True ensures visualization is drawn during calibration
-                    gaze_data = self.detector.detect_and_draw(self.cam_id, frame, is_active=True)
-
-                    elapsed = time.time() - self.detector.calibration_start_time.get(self.cam_id, time.time())
-                    remaining = max(0, self.detector.CALIBRATION_TIME - elapsed)
-
-                    text = f"CALIBRATING ({remaining:.1f}s) - Look Straight"
-                    cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                     cv2.imshow("Gaze Feedback", frame)
 
-                    # Check if calibration just completed
+                    # Record frame
+                    if self.video_writer:
+                        self.video_writer.write(frame)
+
+                    # Check if calibration complete
                     if not self.detector.needs_calibration.get(self.cam_id, False):
                         self.is_calibrated = True
-                        center_x = self.detector.calibrated_data.get(self.cam_id)
-                        print(f"[{self.name}] Calibration complete! Center X: {center_x:.3f}")
+                        print(f"[{self.name}] Calibration complete! Center X: {self.detector.calibrated_data.get(self.cam_id)}")
 
-                        # --- CRITICAL FIX SECTION ---
+                        # Move window to top-left corner
+                        SMALL_W, SMALL_H = 280, 210
+                        POS_X, POS_Y = 10, 10
+                        cv2.resizeWindow("Gaze Feedback", SMALL_W, SMALL_H)
+                        cv2.moveWindow("Gaze Feedback", POS_X, POS_Y)
+                        print(f"[{self.name}] Window moved to corner after calibration.")
 
-                        # 1. Close the window immediately if the config is False
-                        if not KEEP_WINDOW_ACTIVE_AFTER_CALIB:
-                            # Keep tracking active (status=True), but close the window (close_window=True)
-                            self.set_active(True, close_window=True)
-                            print(f"[{self.name}] Window visualization explicitly closed by config.")
-                        else:
-                            # 2. If config is True, keep tracking active (window stays open)
-                            self.set_active(True)
-
-                            # --- Normal Operation (Tracking) ---
                 else:
-                    # Perform detection only if tracking is active
+                    # Normal tracking
                     if self.is_active:
-                        # is_active=True here only controls internal drawing in detector, not window visibility
                         gaze_data = self.detector.detect_and_draw(self.cam_id, frame, is_active=True)
-
-                        is_detected = gaze_data['is_detected']
-                        current_zone = gaze_data['zone_label']
-
-                        # --- Gaze Memory Update ---
-                        self.gaze_memory.update(is_detected, current_zone)
-
+                        self.gaze_memory.update(gaze_data['is_detected'], gaze_data['zone_label'])
                         with self.lock:
-                            self.gaze_state = current_zone
+                            self.gaze_state = gaze_data['zone_label']
 
-                    # ❌ CRITICAL CHANGE: NO CV2.IMSHOW or CV2.NAMEDWINDOW calls here.
+                    # Show small tracking window if enabled
+                    if cv2.getWindowProperty("Gaze Feedback", cv2.WND_PROP_VISIBLE) >= 1:
+                        cv2.imshow("Gaze Feedback", frame)
 
-                # This call is still necessary to process CV2 window events for the brief time it's open
+                    # Record all frames
+                    if self.video_writer:
+                        self.video_writer.write(frame)
+
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     self.running = False
                     break
 
                 time.sleep(0.01)
 
-        except Exception as e:
-            print(f"[{self.name}] An error occurred in the main loop: {e}")
-            self.running = False
-
         finally:
-            print(f"[{self.name}] Stopping Gaze Worker thread...")
-            # This ensures any remaining windows are destroyed on shutdown
+            print(f"[{self.name}] Shutting down Gaze Worker...")
+            if self.video_writer:
+                self.video_writer.release()
             cv2.destroyAllWindows()
             if self.cam_manager:
                 self.cam_manager.stop_all()
