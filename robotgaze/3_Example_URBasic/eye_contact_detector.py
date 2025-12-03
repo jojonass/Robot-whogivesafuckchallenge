@@ -17,11 +17,11 @@ class EyeContactDetector:
 
     LEFT_IRIS = [474, 475, 476, 477]
     RIGHT_IRIS = [469, 470, 471, 472]
-    SMOOTHING_WINDOW = 5  # Number of recent values to average for smooth gaze tracking
+    SMOOTHING_WINDOW = 6 # Number of recent values to average for smooth gaze tracking
     CALIBRATION_TIME = 8.0  # Seconds for calibration
 
     # NEW LOGIC: Use 0.7 as the fixed split point for Left/Right zones
-    GAZE_SPLIT_THRESHOLD = 0.55
+    GAZE_SPLIT_THRESHOLD = 0.5
 
     def __init__(self, camera_manager):
         self.camera_manager = camera_manager
@@ -76,13 +76,11 @@ class EyeContactDetector:
     def detect_and_draw(self, cam_id, image, is_active=True):
         """
         Performs detection, updates gaze state, and draws feedback on the image.
-        Returns gaze data dictionary or None.
+        Returns gaze data dictionary.
 
         Returns:
-          {'is_detected': bool, 'zone_label': str | None, 'normalized_x': float | None}
+            {'is_detected': bool, 'zone_label': str | None, 'normalized_x': float | None}
         """
-
-        # If the worker is not active, skip all the expensive CV/MediaPipe work
         if not is_active:
             return {'is_detected': False, 'zone_label': None, 'normalized_x': None}
 
@@ -93,32 +91,54 @@ class EyeContactDetector:
         image_rgb.flags.writeable = True
 
         raw_x = self._get_iris_position(results, w, h)
-
         if raw_x is None:
-            # No face detected
             return {'is_detected': False, 'zone_label': None, 'normalized_x': None}
 
-        # --- Gaze Smoothing ---
-        if cam_id not in self.recent_gaze_x:
-            self.recent_gaze_x[cam_id] = deque([raw_x] * self.SMOOTHING_WINDOW, maxlen=self.SMOOTHING_WINDOW)
-
-        self.recent_gaze_x[cam_id].append(raw_x)
-        smooth_x = np.median(list(self.recent_gaze_x[cam_id]))
-
-        # --- CALIBRATION LOGIC ---
+        # --- Calibration Phase ---
         if self.needs_calibration.get(cam_id, False):
-            self.calibrating_data[cam_id].append(smooth_x)
+            if cam_id not in self.calibrating_data:
+                self.calibrating_data[cam_id] = []
 
-            if time.time() - self.calibration_start_time[cam_id] >= self.CALIBRATION_TIME:
-                # Calibration time is up, finalize the center
-                if self.calibrating_data[cam_id]:
-                    self.calibrated_data[cam_id] = np.median(self.calibrating_data[cam_id])
-                    # Note: We are using a fixed 0.7 split, so calibration feedback is purely informational.
+            self.calibrating_data[cam_id].append(raw_x)
+            elapsed = time.time() - self.calibration_start_time.get(cam_id, time.time())
+            if elapsed >= self.CALIBRATION_TIME:
+                # Finalize center
+                self.calibrated_data[cam_id] = np.median(self.calibrating_data[cam_id])
                 self.needs_calibration[cam_id] = False
                 self.calibrating_data[cam_id] = []
 
-            # Even if calibrating, we know a face is detected
-            return {'is_detected': True, 'zone_label': "Calibrating", 'normalized_x': smooth_x}
+            return {'is_detected': True, 'zone_label': "Calibrating", 'normalized_x': raw_x}
+
+        # --- Smoothing / EMA (commented out for debugging) ---
+        ALPHA = 0.85  # Commented out
+        if cam_id not in self.recent_gaze_x:
+           self.recent_gaze_x[cam_id] = raw_x
+        else:
+            self.recent_gaze_x[cam_id] = ALPHA * raw_x + (1 - ALPHA) * self.recent_gaze_x[cam_id]
+            smoothed_x = self.recent_gaze_x[cam_id]
+
+        smoothed_x = raw_x  # Direct raw value for debugging
+
+        # --- Hysteresis for zone switching (commented out for debugging) ---
+        # HYSTERESIS = 0.02
+        # if smoothed_x > self.GAZE_SPLIT_THRESHOLD + HYSTERESIS:
+        #     zone_label = "Left"
+        # elif smoothed_x < self.GAZE_SPLIT_THRESHOLD - HYSTERESIS:
+        #     zone_label = "Right"
+        # else:
+        #     zone_label = "Center"
+
+        # Direct zone assignment for debugging
+        zone_label = "Left" if smoothed_x > self.GAZE_SPLIT_THRESHOLD else "Right"
+
+        # --- Drawing ---
+        split_x_px = int(self.GAZE_SPLIT_THRESHOLD * w)
+        cv2.line(image, (split_x_px, 0), (split_x_px, h), (0, 150, 0), 2)
+        cv2.circle(image, (int(smoothed_x * w), h // 2), 10, (0, 0, 255), -1)
+        cv2.putText(image, f"Gaze: {zone_label}", (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        return {'is_detected': True, 'zone_label': zone_label, 'normalized_x': smoothed_x}
 
         # --- NORMAL OPERATION (after calibration) ---
 
